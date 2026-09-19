@@ -1,7 +1,6 @@
 import os
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 
-from typing import List
 from langchain_openai import ChatOpenAI
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
