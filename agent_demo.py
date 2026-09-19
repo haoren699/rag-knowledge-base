@@ -1,7 +1,3 @@
-"""
-ReAct Agent：把 RAG 检索封装成工具，由 Agent 自主决定何时调用
-对应简历：研究 ReAct 智能体框架，实践 RAG 作为工具被 Agent 调用
-"""
 import os
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 
@@ -21,19 +17,15 @@ llm = ChatOpenAI(
     temperature=0,
 )
 
-rag = RAGPipeline(doc_path="doc.txt", persist_dir="./chroma_db")
+rag = RAGPipeline()
 
 
 @tool
 def search_knowledge_base(query: str) -> str:
-    """当用户询问与项目文档相关的问题时，用这个工具检索本地知识库。
-    参数 query：要检索的问题，例如"AI应用开发实习需要哪些技术"。
-    """
+    """检索本地知识库，当问题与文档内容相关时使用。"""
     contexts = rag.hybrid_retrieve(query, top_k=3)
     return "\n---\n".join(contexts)
 
-
-tools = [search_knowledge_base]
 
 prompt = PromptTemplate.from_template("""
 Answer the following questions as best you can. You have access to the following tools:
@@ -57,12 +49,10 @@ Question: {input}
 Thought:{agent_scratchpad}
 """)
 
-agent = create_react_agent(llm, tools, prompt)
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
-
+agent = create_react_agent(llm, [search_knowledge_base], prompt)
+agent_executor = AgentExecutor(agent=agent, tools=[search_knowledge_base], verbose=True, handle_parsing_errors=True)
 
 if __name__ == "__main__":
-    print("Agent 已启动（RAG 作为工具被调用）：")
     q = "AI应用开发实习需要掌握哪些技术？"
     print("问题：", q)
     out = agent_executor.invoke({"input": q})
